@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confess - Created by Sonnyvic</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f8ff;
+            color: #333;
+            transition: background-color 0.5s;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px;
+            text-align: left;
+            position: relative;
+        }
+        .user-profile {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .user-profile img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .user-id {
+            color: white;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        main {
+            padding: 20px;
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            margin-bottom: 10px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        textarea {
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            height: 100px;
+        }
+        select {
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        footer {
+            text-align: center;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            position: relative;
+            bottom: 0;
+            width: 100%;
+        }
+        .confessions {
+            margin-top: 20px;
+        }
+        .confession {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+        #confessionCounter {
+            margin-top: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .rating {
+            display: flex;
+            margin-top: 5px;
+        }
+        .rating button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            padding: 0;
+        }
+        #notification {
+            color: green;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .feedback-form {
+            margin-top: 20px;
+        }
+        .admin-panel {
+            display: none;
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .category-option {
+            transition: transform 0.3s ease;
+        }
+        .category-option:hover {
+            transform: scale(1.05);
+            background-color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="user-profile">
+        <input type="file" id="profilePicInput" accept="image/*" onchange="loadProfilePicture(event)" style="display: none;">
+        <label for="profilePicInput">
+            <img id="profilePic" src="default-profile.png" alt="Profile Picture">
+        </label>
+        <div>
+            <span class="user-id" id="userId">User ID: </span>
+        </div>
+    </div>
+    <h1>Message your secret someone</h1>
+    <p>Leave your confession below</p>
+</header>
+
+<main>
+    <h2>Share your confession link!</h2>
+    <div>
+        <button onclick="generateShareableLink()">Generate Shareable Link</button>
+        <div id="shareableLink" style="margin-top: 10px;"></div>
+        <button id="copyLinkButton" style="display: none;" onclick="copyLink()">Copy Link</button>
+    </div>
+
+    <h2>Confession Form</h2>
+    <form id="confessionForm">
+        <textarea id="confession" placeholder="Type your confession here..." required></textarea>
+        <h3>Confession Categories:</h3>
+        <select id="category" required>
+            <option value="" disabled selected>Select Category</option>
+            <option class="category-option" value="love">Love</option>
+            <option class="category-option" value="friendship">Friendship</option>
+            <option class="category-option" value="regret">Regret</option>
+            <option class="category-option" value="funny">Funny</option>
+        </select>
+        <button type="submit">Submit Confession</button>
+    </form>
+
+    <div id="confessionCounter">Total Confessions: 0</div>
+    <div class="confessions" id="confessions"></div>
+
+    <h2>Feedback Form</h2>
+    <form id="feedbackForm" class="feedback-form">
+        <textarea id="feedback" placeholder="Type your feedback here..." required></textarea>
+        <button type="submit">Submit Feedback</button>
+    </form>
+
+    <div id="notification"></div>
+
+    <h2>Settings</h2>
+    <button onclick="toggleAdminPanel()">Admin Panel</button>
+    <div class="admin-panel" id="adminPanel">
+        <h3>Admin Messages</h3>
+        <button onclick="fetchMessages()">Load Messages for App Owner</button>
+        <div id="messages"></div>
+    </div>
+</main>
+
+<footer>
+    <p>&copy; All Right Reserved 2024 - Created by Sonnyvic Lozada</p>
+</footer>
+
+<script>
+    const confessionForm = document.getElementById("confessionForm");
+    const confessionsContainer = document.getElementById("confessions");
+    const confessionCounter = document.getElementById("confessionCounter");
+    const messagesContainer = document.getElementById("messages");
+    const feedbackForm = document.getElementById("feedbackForm");
+    const feedbackInput = document.getElementById("feedback");
+    const notification = document.getElementById("notification");
+    const adminPanel = document.getElementById("adminPanel");
+    const userIdElement = document.getElementById("userId");
+    const profilePic = document.getElementById("profilePic");
+
+    let totalConfessions = 0;
+
+    // Generate user ID (for demo purposes)
+    userIdElement.textContent += generateUniqueId();
+
+    // Function to generate a shareable link
+    function generateShareableLink() {
+        const userId = userIdElement.textContent.split(': ')[1]; // Kunin ang user ID
+        const link = `https://yourapp.com/confess/${userId}`; // Ibuo ang link
+        document.getElementById('shareableLink').textContent = `Your link: ${link}`; // Ipakita ang link
+        document.getElementById('copyLinkButton').style.display = 'inline-block'; // Ipakita ang button para kopyahin
+    }
+
+    // Function to copy the link to clipboard
+    function copyLink() {
+        const linkText = document.getElementById('shareableLink').textContent.replace('Your link: ', ''); // Kopyahin ang link text
+       <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confess - Created by Sonnyvic</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f8ff;
+            color: #333;
+            transition: background-color 0.5s;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px;
+            text-align: left;
+            position: relative;
+        }
+        .user-profile {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .user-profile img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .user-id {
+            color: white;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        main {
+            padding: 20px;
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            margin-bottom: 10px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        textarea {
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            height: 100px;
+        }
+        select {
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        footer {
+            text-align: center;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            position: relative;
+            bottom: 0;
+            width: 100%;
+        }
+        .confessions {
+            margin-top: 20px;
+        }
+        .confession {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+        #confessionCounter {
+            margin-top: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .rating {
+            display: flex;
+            margin-top: 5px;
+        }
+        .rating button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            padding: 0;
+        }
+        #notification {
+            color: green;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .feedback-form {
+            margin-top: 20px;
+        }
+        .admin-panel {
+            display: none;
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .category-option {
+            transition: transform 0.3s ease;
+        }
+        .category-option:hover {
+            transform: scale(1.05);
+            background-color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="user-profile">
+        <input type="file" id="profilePicInput" accept="image/*" onchange="loadProfilePicture(event)" style="display: none;">
+        <label for="profilePicInput">
+            <img id="profilePic" src="default-profile.png" alt="Profile Picture">
+        </label>
+        <div>
+            <span class="user-id" id="userId">User ID: </span>
+        </div>
+    </div>
+    <h1>Message your secret someone</h1>
+    <p>Leave your confession below</p>
+</header>
+
+<main>
+    <h2>Share your confession link!</h2>
+    <div>
+        <button onclick="generateShareableLink()">Generate Shareable Link</button>
+        <div id="shareableLink" style="margin-top: 10px;"></div>
+        <button id="copyLinkButton" style="display: none;" onclick="copyLink()">Copy Link</button>
+    </div>
+
+    <h2>Confession Form</h2>
+    <form id="confessionForm">
+        <textarea id="confession" placeholder="Type your confession here..." required></textarea>
+        <h3>Confession Categories:</h3>
+        <select id="category" required>
+            <option value="" disabled selected>Select Category</option>
+            <option class="category-option" value="love">Love</option>
+            <option class="category-option" value="friendship">Friendship</option>
+            <option class="category-option" value="regret">Regret</option>
+            <option class="category-option" value="funny">Funny</option>
+        </select>
+        <button type="submit">Submit Confession</button>
+    </form>
+
+    <div id="confessionCounter">Total Confessions: 0</div>
+    <div class="confessions" id="confessions"></div>
+
+    <h2>Feedback Form</h2>
+    <form id="feedbackForm" class="feedback-form">
+        <textarea id="feedback" placeholder="Type your feedback here..." required></textarea>
+        <button type="submit">Submit Feedback</button>
+    </form>
+
+    <div id="notification"></div>
+
+    <h2>Settings</h2>
+    <button onclick="toggleAdminPanel()">Admin Panel</button>
+    <div class="admin-panel" id="adminPanel">
+        <h3>Admin Messages</h3>
+        <button onclick="fetchMessages()">Load Messages for App Owner</button>
+        <div id="messages"></div>
+    </div>
+</main>
+
+<footer>
+    <p>&copy; All Right Reserved 2024 - Created by Sonnyvic Lozada</p>
+</footer>
+
+<script>
+    const confessionForm = document.getElementById("confessionForm");
+    const confessionsContainer = document.getElementById("confessions");
+    const confessionCounter = document.getElementById("confessionCounter");
+    const messagesContainer = document.getElementById("messages");
+    const feedbackForm = document.getElementById("feedbackForm");
+    const feedbackInput = document.getElementById("feedback");
+    const notification = document.getElementById("notification");
+    const adminPanel = document.getElementById("adminPanel");
+    const userIdElement = document.getElementById("userId");
+    const profilePic = document.getElementById("profilePic");
+
+    let totalConfessions = 0;
+
+    // Generate user ID (for demo purposes)
+    userIdElement.textContent += generateUniqueId();
+
+    // Function to generate a shareable link
+    function generateShareableLink() {
+        const userId = userIdElement.textContent.split(': ')[1]; // Kunin ang user ID
+        const link = `https://yourapp.com/confess/${userId}`; // Ibuo ang link
+        document.getElementById('shareableLink').textContent = `Your link: ${link}`; // Ipakita ang link
+        document.getElementById('copyLinkButton').style.display = 'inline-block'; // Ipakita ang button para kopyahin
+    }
+
+    // Function to copy the link to clipboard
+    function copyLink() {
+        const linkText = document.getElementById('shareableLink').textContent.replace('Your link: ', ''); // Kopyahin ang link text
+        navigator.clipboard.writeText(linkText).then(() => {
+            alert("Link copied to clipboard!"); // Alert kapag nakopya na
+        }).catch(err => {
+            console.error('Failed to copy: ', err); // Error handling
+        });
+    }
+
+    // Function to generate a unique ID
+    function generateUniqueId() {
+        return 'user-' + Math.random().toString(36).substr(2, 9); navigator.clipboard.writeText(linkText).then(() => {
+            alert("Link copied to clipboard!"); // Alert kapag nakopya na
+        }).catch(err => {
+            console.error('Failed to copy: ', err); // Error handling
+        });
+    }
+
+    // Function to generate a unique ID
+    function generateUniqueId() {
+        return 'user-' + Math.random().toString(36).substr(2, 9);
